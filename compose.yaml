@@ -1,0 +1,25 @@
+x-app: &app
+  volumes:
+    - ./app:/src/app:ro
+  environment:
+    WORKERS: ${WORKERS:?}
+    REALPATH_CACHE_SIZE: ${REALPATH_CACHE_SIZE:?}
+    REALPATH_CACHE_TTL: ${REALPATH_CACHE_TTL:?}
+    OPCACHE_ENABLE: ${OPCACHE_ENABLE:?}
+    OPCACHE_VALIDATE_TIMESTAMPS: ${OPCACHE_VALIDATE_TIMESTAMPS:?}
+    OPCACHE_REVALIDATE_FREQ: ${OPCACHE_REVALIDATE_FREQ:?}
+    OPCACHE_REVALIDATE_PATH: ${OPCACHE_REVALIDATE_PATH:?}
+    OPCACHE_FILE_UPDATE_PROTECTION: ${OPCACHE_FILE_UPDATE_PROTECTION:?}
+  ports:
+    - "127.0.0.1:8080:80"
+
+services:
+  nginx:
+    <<: *app
+    profiles: [nginx]
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    networks:
+      default:
+        aliases: [web]

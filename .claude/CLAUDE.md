@@ -60,7 +60,7 @@ Docker Composeを使用し、以下のSAPIで実行する環境を構築する�
 検証対象は「SAPI × realpath cache × OPcache × シンボリックリンク」に限定し、それ以外の機能は追加しない。
 
 * 切り替え方式: ドキュメントルート（`public/`）は実ディレクトリとし、`public/index.php -> ../private/vN/index.php` のファイル単位のシンボリックリンクを切り替える
-* `private/vN/index.php` は include なしで完結させる。v1 / v2 は事前に配置しておく
+* `private/vN/index.php` は共通処理（`lib/`）を include し、バージョンのみを持つ。`lib/` は切り替え・検証の対象外とする。v1 / v2 は事前に配置しておく
 * シンボリックリンクの切り替えは `docker compose exec <svc> ln -sfn ...` で行う（非アトミックであることを前提とする）
 * キャッシュクリアは HTTP の制御エンドポイント（`public/_control.php`）で行う。realpath cache はプロセスごと、OPcache はWebサーバーの共有メモリにあるため、CLI からはクリアできない
 * レスポンスには PID を含め、ワーカーごとの違いを観測できるようにする。ワーカー数は `.env` の `WORKERS` で 1〜n を指定する

@@ -6,7 +6,7 @@
 
 - 切り替え方式: `public/index.php -> ../private/vN/index.php`（ファイル単位のシンボリックリンク）
 - v1 / v2 は事前配置。切り替えは `docker compose exec <svc> ln -sfn ...`（非アトミック）
-- `private/vN/index.php` は include なしで完結
+- `private/vN/index.php` は共通処理 `lib/response.php` を include（`lib/` は切り替え・検証の対象外）
 - キャッシュクリアは HTTP（`/_control.php`）。realpath cache は処理したワーカーのみが対象
 - ワーカー数は `.env` の `WORKERS` で 1〜n を指定（fpm: `pm=static` / Apache: prefork 固定数）
 - 設定変更は `.env` を書き換えてコンテナ再起動
@@ -18,14 +18,14 @@
 
 ### Step 1: nginx + php-fpm 8.5 で v1 を返す
 
-- [ ] `.gitattributes`（LF 固定）、`.gitignore`（`results/`, `.env`）
-- [ ] `.env.example`（`WORKERS`, `REALPATH_CACHE_SIZE`, `REALPATH_CACHE_TTL`, `OPCACHE_*`）
-- [ ] `docker/php.ini`（環境変数を展開するキャッシュ設定）
-- [ ] `docker/entrypoint.sh`（`/srv/app` へコピー、`index.php -> v1` 作成）
-- [ ] `docker/nginx/`（Dockerfile, nginx.conf, www.conf）
-- [ ] `compose.yaml`（nginx サービス、profile `nginx`、ネットワークエイリアス `web`）
-- [ ] `app/private/v1/index.php`, `app/private/v2/index.php`（観測 JSON を返す）
-- [ ] 確認: `curl http://127.0.0.1:8080/` で v1 の JSON が返る
+- [x] `.gitattributes`（LF 固定）、`.gitignore`（`results/`, `.env`）
+- [x] `.env.example`（`WORKERS`, `REALPATH_CACHE_SIZE`, `REALPATH_CACHE_TTL`, `OPCACHE_*`）
+- [x] `docker/php.ini`（環境変数を展開するキャッシュ設定）
+- [x] `docker/entrypoint.sh`（`/srv/app` へコピー、`index.php -> v1` 作成）
+- [x] `docker/nginx/`（Dockerfile, nginx.conf, www.conf）
+- [x] `compose.yaml`（nginx サービス、profile `nginx`、ネットワークエイリアス `web`）
+- [x] `app/private/v1/index.php`, `app/private/v2/index.php`, `app/lib/response.php`（観測 JSON を返す）
+- [x] 確認: `curl http://127.0.0.1:8080/` で v1 の JSON が返る
 
 ### Step 2: 制御エンドポイント
 
