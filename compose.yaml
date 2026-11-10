@@ -23,3 +23,13 @@ services:
     networks:
       default:
         aliases: [web]
+
+  apache:
+    <<: *app
+    profiles: [apache]
+    build:
+      context: .
+      dockerfile: docker/apache/Dockerfile
+    networks:
+      default:
+        aliases: [web]

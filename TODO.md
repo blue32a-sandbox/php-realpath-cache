@@ -34,9 +34,9 @@
 
 ### Step 3: Apache + mod_php 8.5
 
-- [ ] `docker/apache/`（Dockerfile, vhost.conf。prefork、`FollowSymLinks`）
-- [ ] `compose.yaml` に apache サービス追加（profile `apache`、エイリアス `web`）
-- [ ] 確認: 共通ファイル（`app/`, `docker/php.ini`, `entrypoint.sh`）を変更せずに Step 1〜2 と同じ確認が通る
+- [x] `docker/apache/`（Dockerfile, vhost.conf。prefork、`FollowSymLinks`）
+- [x] `compose.yaml` に apache サービス追加（profile `apache`、エイリアス `web`）
+- [x] 確認: 共通ファイル（`app/`, `docker/php.ini`, `entrypoint.sh`）を変更せずに Step 1〜2 と同じ確認が通る
 
 ### Step 4: 観測クライアント
 
