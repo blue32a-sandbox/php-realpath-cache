@@ -1,0 +1,50 @@
+# TODO
+
+各ステップ完了後に動作確認を行い、確認が取れてから次へ進む。
+
+## 決定事項
+
+- 切り替え方式: `public/index.php -> ../private/vN/index.php`（ファイル単位のシンボリックリンク）
+- v1 / v2 は事前配置。切り替えは `docker compose exec <svc> ln -sfn ...`（非アトミック）
+- `private/vN/index.php` は include なしで完結
+- キャッシュクリアは HTTP（`/_control.php`）。realpath cache は処理したワーカーのみが対象
+- ワーカー数は `.env` の `WORKERS` で 1〜n を指定（fpm: `pm=static` / Apache: prefork 固定数）
+- 設定変更は `.env` を書き換えてコンテナ再起動
+- 1環境ずつ起動（Compose profiles: `apache` / `nginx`）。公開ポートは `127.0.0.1:8080`
+- 起動時にソースをコンテナ内 `/srv/app` へコピーし、`index.php -> v1` を作成（named volume なし）
+- クライアントは PHP CLI。記録は JSONL + 終了時サマリー
+
+## ステップ
+
+### Step 1: nginx + php-fpm 8.5 で v1 を返す
+
+- [ ] `.gitattributes`（LF 固定）、`.gitignore`（`results/`, `.env`）
+- [ ] `.env.example`（`WORKERS`, `REALPATH_CACHE_SIZE`, `REALPATH_CACHE_TTL`, `OPCACHE_*`）
+- [ ] `docker/php.ini`（環境変数を展開するキャッシュ設定）
+- [ ] `docker/entrypoint.sh`（`/srv/app` へコピー、`index.php -> v1` 作成）
+- [ ] `docker/nginx/`（Dockerfile, nginx.conf, www.conf）
+- [ ] `compose.yaml`（nginx サービス、profile `nginx`、ネットワークエイリアス `web`）
+- [ ] `app/private/v1/index.php`, `app/private/v2/index.php`（観測 JSON を返す）
+- [ ] 確認: `curl http://127.0.0.1:8080/` で v1 の JSON が返る
+
+### Step 2: 制御エンドポイント
+
+- [ ] `app/public/_control.php`（`action=status`, `action=clear&target=realpath|opcache|all`）
+- [ ] 確認: `ln -sfn` で v2 に切り替え → キャッシュクリア → 反映されることを curl で確認
+
+### Step 3: Apache + mod_php 8.5
+
+- [ ] `docker/apache/`（Dockerfile, vhost.conf。prefork、`FollowSymLinks`）
+- [ ] `compose.yaml` に apache サービス追加（profile `apache`、エイリアス `web`）
+- [ ] 確認: 共通ファイル（`app/`, `docker/php.ini`, `entrypoint.sh`）を変更せずに Step 1〜2 と同じ確認が通る
+
+### Step 4: 観測クライアント
+
+- [ ] `client/observe.php`（`--url`, `--interval`, `--until`, `--timeout`, `--out`）
+- [ ] `compose.yaml` に client サービス追加
+- [ ] 確認: 観測中に切り替え → JSONL とサマリーが出力される
+
+### Step 5: 検証と README
+
+- [ ] 両環境で代表的な設定（デフォルト / `REALPATH_CACHE_TTL=0` / `opcache.validate_timestamps` 等）を試し、差が出ることを確認
+- [ ] `README.md`（起動方法、実験手順、結果に影響する設定一覧、Windows での注意点）
