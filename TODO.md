@@ -7,7 +7,7 @@
 - 切り替え方式: `public/index.php -> ../private/vN/index.php`（ファイル単位のシンボリックリンク）
 - v1 / v2 は事前配置。切り替えは `docker compose exec <svc> ln -sfn ...`（非アトミック）
 - `private/vN/index.php` は共通処理 `lib/response.php` を include（`lib/` は切り替え・検証の対象外）
-- キャッシュクリアは HTTP（`/_control.php`）。realpath cache は処理したワーカーのみが対象
+- 状態参照は HTTP（`/_status.php`）、キャッシュクリアは HTTP（`/_clear.php`）。realpath cache は処理したワーカーのみが対象
 - ワーカー数は `.env` の `WORKERS` で 1〜n を指定（fpm: `pm=static` / Apache: prefork 固定数）
 - 設定変更は `.env` を書き換えてコンテナ再起動
 - 1環境ずつ起動（Compose profiles: `apache` / `nginx`）。公開ポートは `127.0.0.1:8080`
@@ -29,8 +29,8 @@
 
 ### Step 2: 制御エンドポイント
 
-- [ ] `app/public/_control.php`（`action=status`, `action=clear&target=realpath|opcache|all`）
-- [ ] 確認: `ln -sfn` で v2 に切り替え → キャッシュクリア → 反映されることを curl で確認
+- [x] `app/public/_status.php`（ワーカーの realpath cache と OPcache の状態）、`app/public/_clear.php`（`target=realpath|opcache|all`）
+- [x] 確認: `ln -sfn` で v2 に切り替え → キャッシュクリア → 反映されることを curl で確認
 
 ### Step 3: Apache + mod_php 8.5
 

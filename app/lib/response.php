@@ -1,12 +1,17 @@
 <?php
-// private/vN/index.php から include する共通処理。
-// このファイル自体はシンボリックリンク切り替えの対象外。
+// private/vN/index.php と public/_*.php から include する共通処理。
+// このファイル自体はシンボリックリンク切り替え・検証の対象外。
+
+function send_json(array $data, int $status = 200): void
+{
+    http_response_code($status);
+    header('Content-Type: application/json');
+    echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+}
 
 function respond(string $version, string $file): void
 {
-    header('Content-Type: application/json');
-
-    echo json_encode([
+    send_json([
         'version' => $version,
         'time' => microtime(true),
         'pid' => getmypid(),
@@ -25,5 +30,5 @@ function respond(string $version, string $file): void
             'opcache.revalidate_path' => ini_get('opcache.revalidate_path'),
             'opcache.file_update_protection' => ini_get('opcache.file_update_protection'),
         ],
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+    ]);
 }
