@@ -6,6 +6,6 @@ set -eu
 rm -rf /srv/app
 mkdir -p /srv/app
 cp -R /src/app/. /srv/app/
-ln -sfn ../private/v1/index.php /srv/app/public/index.php
+switch v1 > /dev/null
 
 exec "$@"

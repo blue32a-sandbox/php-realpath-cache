@@ -33,3 +33,16 @@ services:
     networks:
       default:
         aliases: [web]
+
+  # 観測クライアント: docker compose run --rm client --until=v2
+  client:
+    image: php:8.5-cli
+    profiles: [client]
+    volumes:
+      - ./client:/client:ro
+      - ./results:/work/results
+    working_dir: /work
+    environment:
+      WORKERS: ${WORKERS:?}
+      TZ: Asia/Tokyo  # 自動生成するファイル名の時刻
+    entrypoint: ["php", "/client/observe.php"]

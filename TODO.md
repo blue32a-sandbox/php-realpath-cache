@@ -5,7 +5,7 @@
 ## 決定事項
 
 - 切り替え方式: `public/index.php -> ../private/vN/index.php`（ファイル単位のシンボリックリンク）
-- v1 / v2 は事前配置。切り替えは `docker compose exec <svc> ln -sfn ...`（非アトミック）
+- v1 / v2 は事前配置。切り替えは `docker compose exec <svc> switch vN`（中身は `ln -sfn`、非アトミック。Git Bash のパス変換を避けるためコンテナ内スクリプト化）
 - `private/vN/index.php` は共通処理 `lib/response.php` を include（`lib/` は切り替え・検証の対象外）
 - 状態参照は HTTP（`/_status.php`）、キャッシュクリアは HTTP（`/_clear.php`）。realpath cache は処理したワーカーのみが対象
 - ワーカー数は `.env` の `WORKERS` で 1〜n を指定（fpm: `pm=static` / Apache: prefork 固定数）
@@ -40,9 +40,9 @@
 
 ### Step 4: 観測クライアント
 
-- [ ] `client/observe.php`（`--url`, `--interval`, `--until`, `--timeout`, `--out`）
-- [ ] `compose.yaml` に client サービス追加
-- [ ] 確認: 観測中に切り替え → JSONL とサマリーが出力される
+- [x] `client/observe.php`（`--url`, `--interval`, `--until`, `--timeout`, `--out`）
+- [x] `compose.yaml` に client サービス追加
+- [x] 確認: 観測中に切り替え → JSONL とサマリーが出力される
 
 ### Step 5: 検証と README
 
