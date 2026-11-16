@@ -8,7 +8,7 @@
 |---|---|---|
 | [realpath cache の検証](realpath-cache.md) | OPcache を無効にし、`realpath_cache_ttl` / `realpath_cache_size` だけで反映のタイミングを確認 | 完了 |
 | [OPcache・シンボリックリンク・リンク先 mtime の検証](opcache-mtime.md) | realpath cache を無効にし、OPcache がどのファイルの mtime で更新を判定するかを確認 | 完了 |
-| realpath cache + OPcache の検証 | 両方のキャッシュの設定を組み合わせたときの反映のタイミングを確認 | 未実施 |
+| [realpath cache + OPcache の検証](realpath-opcache.md) | 両方のキャッシュが有効な状態で、OPcache の設定ごとに反映のタイミングを確認 | 完了（未解決の点あり） |
 
 ## 主な結論
 
@@ -21,6 +21,17 @@
 - リンク先の mtime は、どちらの環境でも反映に影響しない
 - nginx + php-fpm では、OPcache がキャッシュした v1 の実ファイルの mtime で判定するため、切り替えは反映されない。v1 を書き換えると反映される
 - Apache + mod_php では、切り替えた直後に反映される。nginx + php-fpm との違いの原因は未確認
+
+**realpath cache + OPcache**（どちらも有効）
+
+| 設定 | nginx + php-fpm | Apache + mod_php |
+|---|---|---|
+| default | 反映されない | realpath cache の期限切れの約 2 秒後 |
+| `validate_timestamps=0` | 反映されない | 反映されない |
+| `revalidate_path=1` | realpath cache の期限切れの直後 | realpath cache の期限切れの直後 |
+
+- realpath cache はワーカーごとにあるため、WORKERS=2 では反映のタイミングがワーカーごとにずれる
+- apache / WORKERS=2 / default は、反映のタイミングが一定しなかった（4回中2回は TTL より早い約 65 秒・約 89 秒）。原因は未確認
 
 ## 共通の前提
 

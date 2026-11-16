@@ -114,29 +114,27 @@ SIZE（`REALPATH_CACHE_TTL` はデフォルトの 120）:
 - [x] apache / older
 - [x] apache / touch-v1
 
+- [x] mtime の検証を踏まえて、下の検証パターンを再度見直す
+  - `rp-off` は mtime の検証（newer）、`oc-off` は realpath cache 単独の検証の結果で代え、実施しない
+  - WORKERS=2 は realpath cache の期限切れで反映されると予想されるパターンのみ（ずっと v1 のパターンではワーカー差が出ない）
+  - 以前に実施した nginx / WORKERS=1 / default は mtime を変えた条件だったため、やり直す
+
 #### 検証パターン
 
 nginx + php-fpm:
 
-- [ ] nginx / WORKERS=1 / default
-- [ ] nginx / WORKERS=1 / rp-off
-- [ ] nginx / WORKERS=1 / oc-off
-- [ ] nginx / WORKERS=1 / oc-novalidate
-- [ ] nginx / WORKERS=1 / oc-revalpath
-- [ ] nginx / WORKERS=2 / default
-- [ ] nginx / WORKERS=2 / oc-novalidate
-- [ ] nginx / WORKERS=2 / oc-revalpath
+- [x] nginx / WORKERS=1 / default
+- [x] nginx / WORKERS=1 / oc-novalidate
+- [x] nginx / WORKERS=1 / oc-revalpath
+- [x] nginx / WORKERS=2 / oc-revalpath
 
 Apache + mod_php:
 
-- [ ] apache / WORKERS=1 / default
-- [ ] apache / WORKERS=1 / rp-off
-- [ ] apache / WORKERS=1 / oc-off
-- [ ] apache / WORKERS=1 / oc-novalidate
-- [ ] apache / WORKERS=1 / oc-revalpath
-- [ ] apache / WORKERS=2 / default
-- [ ] apache / WORKERS=2 / oc-novalidate
-- [ ] apache / WORKERS=2 / oc-revalpath
+- [x] apache / WORKERS=1 / default
+- [x] apache / WORKERS=1 / oc-novalidate
+- [x] apache / WORKERS=1 / oc-revalpath
+- [x] apache / WORKERS=2 / default
+- [x] apache / WORKERS=2 / oc-revalpath
 
 #### まとめ
 
