@@ -64,6 +64,30 @@
 | oc-novalidate | `OPCACHE_VALIDATE_TIMESTAMPS=0` |
 | oc-revalpath | `OPCACHE_REVALIDATE_PATH=1` |
 
+#### realpath cache 単独の検証（先に実施し、結果を踏まえて下の検証パターンを見直す）
+
+OPcache を無効にして、realpath cache の設定だけで切り替えの反映がどう変わるかを確認する。`realpath_cache_ttl=0` が無期限になるという情報は公式に記載がないため、これも確認する。
+
+- 共通条件: `OPCACHE_ENABLE=0`、`WORKERS=1`、`--timeout=180`
+- 手順: 再起動 → `/` に1回リクエスト → `_status.php` で ini と `expires` を記録 → 観測開始 → `switch v2` → v2 になるか timeout まで観測 → `_status.php` を記録 → v1 のままなら `_clear.php?target=realpath` 後に `/` が v2 になることを確認
+- 記録: `results/ttl-<env>-<TTL>.*`、`results/size-<env>-0.*`。結果は `RESULTS.md` の「realpath cache の検証」
+
+TTL（`REALPATH_CACHE_SIZE` はデフォルト）:
+
+- [x] nginx / TTL=0（`RESULTS.md` に記録）
+- [x] nginx / TTL=-1
+- [x] nginx / TTL=30
+- [x] apache / TTL=0
+- [x] apache / TTL=-1
+- [x] apache / TTL=30
+
+SIZE（`REALPATH_CACHE_TTL` はデフォルトの 120）:
+
+- [x] nginx / SIZE=0
+- [x] apache / SIZE=0
+
+- [ ] 結果を踏まえて、下の検証パターン（realpath cache + OPcache）を見直す
+
 #### 検証パターン（1パターンずつ確認しながら進める）
 
 nginx + php-fpm:
