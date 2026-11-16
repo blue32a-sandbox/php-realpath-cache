@@ -1,10 +1,8 @@
-# 検証結果
-
-## realpath cache の検証
+# realpath cache の検証
 
 OPcache を無効にして、realpath cache の設定（`realpath_cache_ttl` / `realpath_cache_size`）だけで、シンボリックリンクの切り替えがいつ反映されるかを確認した。`realpath_cache_ttl=0` を指定するとエントリが無期限になるという情報があるが、公式ドキュメントには記載がないため、これもあわせて確認した。
 
-### 結論
+## 結論
 
 nginx + php-fpm と Apache + mod_php で、同じ結果になった。
 
@@ -22,7 +20,7 @@ nginx + php-fpm と Apache + mod_php で、同じ結果になった。
 - **`realpath_cache_size=0` は無効**
   - エントリは登録されず（0 件）、切り替えはすぐに反映された
 
-### 条件
+## 条件
 
 | 項目 | 値 |
 |---|---|
@@ -33,7 +31,7 @@ nginx + php-fpm と Apache + mod_php で、同じ結果になった。
 | `REALPATH_CACHE_SIZE` | 0（TTL の検証ではデフォルトの 4096K） |
 | 観測 | 0.5 秒間隔、`--timeout=180`、手動クリアなし |
 
-### 手順
+## 手順
 
 1. コンテナを再起動し、`/` に1回リクエストする（v1 のエントリを作る）
 2. `_status.php` を記録する
@@ -41,7 +39,7 @@ nginx + php-fpm と Apache + mod_php で、同じ結果になった。
 4. 全 PID が v2 になるか、timeout まで観測する。そのあと `_status.php` を記録する
 5. v1 のままだった場合は、`_clear.php?target=realpath` で realpath cache だけをクリアし、`/` を確認する
 
-### 結果
+## 結果
 
 時刻は、最初のリクエストで realpath cache にエントリができた時刻を 0 秒とした目安である。
 
@@ -58,7 +56,7 @@ nginx + php-fpm と Apache + mod_php で、同じ結果になった。
 
 どのケースも PID は1つ（nginx は 15、apache は 23）で、エラーはなかった。
 
-### 記録
+## 記録
 
 `results/` 配下（コミット対象外）:
 

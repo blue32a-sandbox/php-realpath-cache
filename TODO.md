@@ -50,7 +50,7 @@
 
 - 手順: 観測開始 → `switch v2` → 手動クリアなしで `--timeout=180` まで観測（全 PID が v2 になれば終了）
 - 各設定は単独で変更し、ほかは `.env.example` のデフォルトのまま（組み合わせは試さない）
-- 記録: `results/<env>-w<WORKERS>-<設定>.jsonl`、結果は `RESULTS.md` にまとめてコミット
+- 記録: `results/<env>-w<WORKERS>-<設定>.jsonl`、結果は `report/` にまとめてコミット
 - 実行は手動（手順は README に記載）
 
 設定:
@@ -58,8 +58,7 @@
 | ID | 変更内容 |
 |---|---|
 | default | なし |
-| rp-ttl0 | `REALPATH_CACHE_TTL=0` |
-| rp-size0 | `REALPATH_CACHE_SIZE=0` |
+| rp-off | `REALPATH_CACHE_TTL=-1` かつ `REALPATH_CACHE_SIZE=0`（realpath cache 無効） |
 | oc-off | `OPCACHE_ENABLE=0` |
 | oc-novalidate | `OPCACHE_VALIDATE_TIMESTAMPS=0` |
 | oc-revalpath | `OPCACHE_REVALIDATE_PATH=1` |
@@ -70,11 +69,11 @@ OPcache を無効にして、realpath cache の設定だけで切り替えの反
 
 - 共通条件: `OPCACHE_ENABLE=0`、`WORKERS=1`、`--timeout=180`
 - 手順: 再起動 → `/` に1回リクエスト → `_status.php` で ini と `expires` を記録 → 観測開始 → `switch v2` → v2 になるか timeout まで観測 → `_status.php` を記録 → v1 のままなら `_clear.php?target=realpath` 後に `/` が v2 になることを確認
-- 記録: `results/ttl-<env>-<TTL>.*`、`results/size-<env>-0.*`。結果は `RESULTS.md` の「realpath cache の検証」
+- 記録: `results/ttl-<env>-<TTL>.*`、`results/size-<env>-0.*`。結果は `report/realpath-cache.md`
 
 TTL（`REALPATH_CACHE_SIZE` はデフォルト）:
 
-- [x] nginx / TTL=0（`RESULTS.md` に記録）
+- [x] nginx / TTL=0
 - [x] nginx / TTL=-1
 - [x] nginx / TTL=30
 - [x] apache / TTL=0
@@ -86,41 +85,60 @@ SIZE（`REALPATH_CACHE_TTL` はデフォルトの 120）:
 - [x] nginx / SIZE=0
 - [x] apache / SIZE=0
 
-- [ ] 結果を踏まえて、下の検証パターン（realpath cache + OPcache）を見直す
+- [x] 結果を踏まえて、下の検証パターン（realpath cache + OPcache）を見直す
+  - `rp-ttl0` / `rp-size0` は realpath cache 無効の意図だったため、`rp-off`（TTL=-1 かつ SIZE=0）に統合
+  - WORKERS=2 は差が出そうなパターンのみ。realpath cache または OPcache を無効にするパターン（`rp-off` / `oc-off`）では行わない
 
-#### 検証パターン（1パターンずつ確認しながら進める）
+#### OPcache・シンボリックリンク・リンク先 mtime の検証（先に実施し、結果を踏まえて下の検証パターンを再開する）
+
+`validate_timestamps=1` の OPcache が、シンボリックリンクの切り替え時にどのファイルの mtime で更新を判定するかを確認する。
+
+- 共通条件: realpath cache 無効（`REALPATH_CACHE_TTL=-1`、`REALPATH_CACHE_SIZE=0`）、OPcache はデフォルト、`WORKERS=1`、`--timeout=180`
+- mtime は起動後・最初のリクエスト前に `docker compose exec <svc> touch ...` で設定する（検証時のみ entrypoint で v1 を1時間前にしていた。検証後に元に戻した）
+- 手順: 再起動 → mtime 設定 → `/` に1回リクエスト → `_status.php` を記録 → 観測開始 → `switch v2` →（touch-v1 のみ約10秒後に v1 を `touch`）→ v2 になるか timeout まで観測 → `_status.php` を記録
+- 記録: `results/mtime-<env>-<ケース>.*`。結果は `report/opcache-mtime.md`
+
+| ケース | mtime |
+|---|---|
+| same | v2 を v1 と同じにする（`touch -r`） |
+| newer | v2 が v1 より新しい（検証時の entrypoint で設定） |
+| older | v2 を v1 より古くする |
+| touch-v1 | newer と同じ。切り替え後に v1 を `touch` する |
+
+- [x] nginx / same
+- [x] nginx / newer
+- [x] nginx / older
+- [x] nginx / touch-v1
+- [x] apache / same
+- [x] apache / newer
+- [x] apache / older
+- [x] apache / touch-v1
+
+#### 検証パターン
 
 nginx + php-fpm:
 
 - [ ] nginx / WORKERS=1 / default
-- [ ] nginx / WORKERS=1 / rp-ttl0
-- [ ] nginx / WORKERS=1 / rp-size0
+- [ ] nginx / WORKERS=1 / rp-off
 - [ ] nginx / WORKERS=1 / oc-off
 - [ ] nginx / WORKERS=1 / oc-novalidate
 - [ ] nginx / WORKERS=1 / oc-revalpath
 - [ ] nginx / WORKERS=2 / default
-- [ ] nginx / WORKERS=2 / rp-ttl0
-- [ ] nginx / WORKERS=2 / rp-size0
-- [ ] nginx / WORKERS=2 / oc-off
 - [ ] nginx / WORKERS=2 / oc-novalidate
 - [ ] nginx / WORKERS=2 / oc-revalpath
 
 Apache + mod_php:
 
 - [ ] apache / WORKERS=1 / default
-- [ ] apache / WORKERS=1 / rp-ttl0
-- [ ] apache / WORKERS=1 / rp-size0
+- [ ] apache / WORKERS=1 / rp-off
 - [ ] apache / WORKERS=1 / oc-off
 - [ ] apache / WORKERS=1 / oc-novalidate
 - [ ] apache / WORKERS=1 / oc-revalpath
 - [ ] apache / WORKERS=2 / default
-- [ ] apache / WORKERS=2 / rp-ttl0
-- [ ] apache / WORKERS=2 / rp-size0
-- [ ] apache / WORKERS=2 / oc-off
 - [ ] apache / WORKERS=2 / oc-novalidate
 - [ ] apache / WORKERS=2 / oc-revalpath
 
 #### まとめ
 
-- [ ] `RESULTS.md`（パターンごとの結果の要約表）
+- [ ] `report/`（検証ごとのファイルと概要 `report/README.md`）
 - [ ] `README.md`（起動方法、実験手順、結果に影響する設定一覧、Windows での注意点）
