@@ -10,6 +10,8 @@
 | [OPcache・シンボリックリンク・リンク先 mtime の検証](opcache-mtime.md) | realpath cache を無効にし、OPcache がどのファイルの mtime で更新を判定するかを確認 | 完了 |
 | [realpath cache + OPcache の検証](realpath-opcache.md) | 両方のキャッシュが有効な状態で、OPcache の設定ごとに反映のタイミングを確認 | 完了（未解決の点あり） |
 
+既存の記事との比較は [articles.md](articles.md) にまとめた。
+
 ## 主な結論
 
 **realpath cache**（nginx + php-fpm、Apache + mod_php で同じ）

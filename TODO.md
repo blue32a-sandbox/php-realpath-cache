@@ -138,5 +138,35 @@ Apache + mod_php:
 
 #### まとめ
 
-- [ ] `report/`（検証ごとのファイルと概要 `report/README.md`）
-- [ ] `README.md`（起動方法、実験手順、結果に影響する設定一覧、Windows での注意点）
+- [x] `report/`（検証ごとのファイル、概要 `report/README.md`、記事との比較 `report/articles.md`）
+- [x] `README.md`（セットアップ、実験手順、パラメータ、注意点、Windows での注意点）
+
+## 検討事項（未着手）
+
+Step 5 までで残った、原因不明の点と未検証の点。着手する場合は、改めて方針を決めてから進める。
+
+### 原因不明の点
+
+1. apache と nginx で挙動が違う原因（OPcache が更新の判定にどのパスを使っているか）
+   - 記載: `report/realpath-opcache.md`「未解決の点」、`report/opcache-mtime.md` の注記
+   - 深掘りの案:
+     - 1-a. `/` のレスポンスに `get_included_files()[0]` と `$_SERVER['SCRIPT_FILENAME']` を加え、SAPI ごとに比べる
+     - 1-b. ワーカーに `strace` をアタッチし、1リクエストの `stat` / `lstat` / `open` の対象を記録する（Dockerfile への追加と `SYS_PTRACE` が必要）
+     - 1-c. PHP のソースを読む（`ext/opcache/ZendAccelerator.c`、`sapi/apache2handler`、`sapi/fpm`）
+2. apache / WORKERS=2 / default で、TTL より早く反映されることがある（4回中2回）
+   - 記載: `report/realpath-opcache.md`「未解決の点」
+   - 深掘りの案:
+     - 2-a. `/` のレスポンスと JSONL に、`public/index.php` のエントリの `realpath` と `expires` を加え、ワーカーごとに追う
+     - 2-b. apache / default を WORKERS=1 と 2 でそれぞれ 5〜10 回行い、頻度と WORKERS=1 でも起きるかを確かめる
+     - 2-c. Apache の `access.log` に PID（`%P`）を出し、観測クライアント以外のリクエストがないかを確かめる
+     - 2-d. 1-b の strace を付けたまま観測し、早く反映された時点の動きを見る
+   - 提案: 1-a と 2-a を一緒に入れて 2-b を行い、決め手がなければ 1-b に進む
+
+### 未検証の点
+
+- `opcache_reset()` で、全ワーカーの realpath cache もクリアされるか（記事1と記事2で記述が食い違う。`report/articles.md`）
+- nginx の `$realpath_root` による対策（今回のファイル単位のシンボリックリンクでは効かない可能性が高い。`report/articles.md`）
+- OPcache が realpath の情報を共有メモリに持つか（`report/articles.md`）
+- プロセスの再起動による対策
+- mtime の検証は、realpath cache 無効・WORKERS=1 でのみ実施している
+- ディレクトリ単位のシンボリックリンク（記事の構成）での挙動
