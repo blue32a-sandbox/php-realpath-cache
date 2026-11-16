@@ -46,5 +46,57 @@
 
 ### Step 5: 検証と README
 
-- [ ] 両環境で代表的な設定（デフォルト / `REALPATH_CACHE_TTL=0` / `opcache.validate_timestamps` 等）を試し、差が出ることを確認
+#### 検証条件
+
+- 手順: 観測開始 → `switch v2` → 手動クリアなしで `--timeout=180` まで観測（全 PID が v2 になれば終了）
+- 各設定は単独で変更し、ほかは `.env.example` のデフォルトのまま（組み合わせは試さない）
+- 記録: `results/<env>-w<WORKERS>-<設定>.jsonl`、結果は `RESULTS.md` にまとめてコミット
+- 実行は手動（手順は README に記載）
+
+設定:
+
+| ID | 変更内容 |
+|---|---|
+| default | なし |
+| rp-ttl0 | `REALPATH_CACHE_TTL=0` |
+| rp-size0 | `REALPATH_CACHE_SIZE=0` |
+| oc-off | `OPCACHE_ENABLE=0` |
+| oc-novalidate | `OPCACHE_VALIDATE_TIMESTAMPS=0` |
+| oc-revalpath | `OPCACHE_REVALIDATE_PATH=1` |
+
+#### 検証パターン（1パターンずつ確認しながら進める）
+
+nginx + php-fpm:
+
+- [ ] nginx / WORKERS=1 / default
+- [ ] nginx / WORKERS=1 / rp-ttl0
+- [ ] nginx / WORKERS=1 / rp-size0
+- [ ] nginx / WORKERS=1 / oc-off
+- [ ] nginx / WORKERS=1 / oc-novalidate
+- [ ] nginx / WORKERS=1 / oc-revalpath
+- [ ] nginx / WORKERS=2 / default
+- [ ] nginx / WORKERS=2 / rp-ttl0
+- [ ] nginx / WORKERS=2 / rp-size0
+- [ ] nginx / WORKERS=2 / oc-off
+- [ ] nginx / WORKERS=2 / oc-novalidate
+- [ ] nginx / WORKERS=2 / oc-revalpath
+
+Apache + mod_php:
+
+- [ ] apache / WORKERS=1 / default
+- [ ] apache / WORKERS=1 / rp-ttl0
+- [ ] apache / WORKERS=1 / rp-size0
+- [ ] apache / WORKERS=1 / oc-off
+- [ ] apache / WORKERS=1 / oc-novalidate
+- [ ] apache / WORKERS=1 / oc-revalpath
+- [ ] apache / WORKERS=2 / default
+- [ ] apache / WORKERS=2 / rp-ttl0
+- [ ] apache / WORKERS=2 / rp-size0
+- [ ] apache / WORKERS=2 / oc-off
+- [ ] apache / WORKERS=2 / oc-novalidate
+- [ ] apache / WORKERS=2 / oc-revalpath
+
+#### まとめ
+
+- [ ] `RESULTS.md`（パターンごとの結果の要約表）
 - [ ] `README.md`（起動方法、実験手順、結果に影響する設定一覧、Windows での注意点）
